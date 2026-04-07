@@ -1,148 +1,754 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#1a1a2e">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="FlyGuys Pilot">
-  <title>FlyGuys Pilot</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
-  <link rel="apple-touch-icon" href="icon-192.png">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { 
-      width: 100%; height: 100%; overflow: hidden;
-      background: #1a1a2e;
-    }
-    
-    /* Loading splash shown before iframe loads */
-    #splash {
-      position: fixed; inset: 0; z-index: 100;
-      background: linear-gradient(145deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      transition: opacity 0.4s ease, visibility 0.4s ease;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    }
-    #splash.hidden { opacity: 0; visibility: hidden; }
-    
-    #splash .logo {
-      width: 80px; height: 80px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 20px;
-      display: flex; align-items: center; justify-content: center;
-      margin-bottom: 24px;
-      animation: pulse 2s ease-in-out infinite;
-    }
-    #splash .logo svg { width: 48px; height: 48px; }
-    
-    #splash h1 {
-      color: #e2e8f0;
-      font-size: 22px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
-    }
-    #splash p {
-      color: rgba(226,232,240,0.5);
-      font-size: 13px;
-    }
-    
-    #splash .spinner {
-      margin-top: 32px;
-      width: 28px; height: 28px;
-      border: 3px solid rgba(255,255,255,0.1);
-      border-top-color: #e94560;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-    
-    @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes pulse { 
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.05); opacity: 0.8; }
-    }
-    
-    /* The main iframe */
-    #app-frame {
-      width: 100%; height: 100%; border: none;
-      position: fixed; inset: 0;
-    }
-    
-    /* Offline banner */
-    #offline-banner {
-      display: none;
-      position: fixed; top: 0; left: 0; right: 0;
-      z-index: 200;
-      background: #e94560;
-      color: white;
-      text-align: center;
-      padding: 8px 16px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-size: 13px;
-      font-weight: 500;
-    }
-    #offline-banner.show { display: block; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FG Planner">
+<meta name="theme-color" content="#0c1220">
+<title>Flyguys Field Planner</title>
+<link rel="manifest" href="/manifest.json">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0c1220;--surf:#182030;--surf2:#1e2d42;--surf3:#243550;
+  --accent:#38bdf8;--text:#f0f6ff;--muted:#7a9bb5;
+  --ok:#22c55e;--warn:#f59e0b;--danger:#ef4444;--facade:#a78bfa;--r:11px;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;max-width:520px;margin:0 auto;height:100%;}
+#hdr{background:var(--surf);display:flex;align-items:center;gap:8px;padding:12px 14px;padding-top:max(14px,env(safe-area-inset-top));border-bottom:1px solid rgba(255,255,255,0.05);flex-shrink:0;min-height:54px;}
+#back-btn{background:none;border:none;color:var(--accent);font-size:26px;cursor:pointer;display:none;line-height:1;padding:0 6px 0 0;}
+#hdr-title{flex:1;font-size:17px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#add-btn{background:var(--accent);color:#0c1220;border:none;border-radius:18px;padding:6px 13px;font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0;}
+#add-btn:active{opacity:.8}
+#main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px}
+#nav{display:flex;background:var(--surf);flex-shrink:0;border-top:1px solid rgba(255,255,255,0.05);padding-bottom:env(safe-area-inset-bottom);}
+.nb{flex:1;background:none;border:none;color:var(--muted);padding:9px 2px 7px;font-size:9px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;transition:color .15s;font-family:inherit;}
+.nb.on{color:var(--accent)}
+.nbi{font-size:19px;line-height:1}
+.card{background:var(--surf);border-radius:var(--r);padding:14px;margin-bottom:9px;cursor:pointer;border:1px solid rgba(255,255,255,0.04);transition:border-color .15s;}
+.card:active{border-color:var(--accent)}
+.cr{display:flex;align-items:center;justify-content:space-between}
+.ct{font-size:15px;font-weight:600}
+.cs{font-size:12px;color:var(--muted);margin-top:4px}
+.badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;flex-shrink:0;text-transform:uppercase;letter-spacing:.04em}
+.b-scheduled{background:rgba(56,189,248,.12);color:var(--accent)}
+.b-active{background:rgba(245,158,11,.12);color:var(--warn)}
+.b-complete{background:rgba(34,197,94,.12);color:var(--ok)}
+.b-hold{background:rgba(239,68,68,.12);color:var(--danger)}
+.fl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+input,textarea,select{width:100%;background:var(--surf2);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:10px 12px;color:var(--text);font-size:15px;font-family:inherit;outline:none;-webkit-appearance:none;appearance:none;}
+input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+select option{background:#1e2d42}
+textarea{resize:vertical;min-height:66px}
+.fg{margin-bottom:13px}
+.btn{border:none;border-radius:8px;padding:11px 16px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s;}
+.btn:active{opacity:.75}
+.bp{background:var(--accent);color:#0c1220}
+.bd{background:rgba(239,68,68,.12);color:var(--danger)}
+.bg{background:var(--surf2);color:var(--text)}
+.br{display:flex;gap:8px}
+.tog-row{display:flex;align-items:center;justify-content:space-between;background:var(--surf2);border-radius:9px;padding:12px 14px;margin-bottom:13px;}
+.tog-label{font-size:14px;font-weight:600}
+.tog-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.tog{width:44px;height:26px;background:var(--surf3);border-radius:13px;position:relative;cursor:pointer;flex-shrink:0;transition:background .2s;border:none;}
+.tog.on{background:var(--facade)}
+.tog.acc.on{background:var(--accent)}
+.tog::after{content:'';position:absolute;width:20px;height:20px;background:#fff;border-radius:50%;top:3px;left:3px;transition:transform .2s;}
+.tog.on::after{transform:translateX(18px)}
+.cli{display:flex;align-items:center;gap:12px;background:var(--surf);border-radius:9px;padding:12px;margin-bottom:8px;}
+.clc{width:23px;height:23px;border-radius:50%;border:2px solid var(--muted);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.clc.ck{background:var(--ok);border-color:var(--ok)}
+.clc.ck-f{background:var(--facade);border-color:var(--facade)}
+.clc.ck::after,.clc.ck-f::after{content:'✓';color:#fff;font-size:13px;font-weight:800}
+.clt{flex:1;font-size:14px}
+.clt.done{text-decoration:line-through;color:var(--muted)}
+.cld{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:2px 6px;line-height:1;}
+.cld:active{color:var(--danger)}
+.drag-handle{display:flex;flex-direction:column;justify-content:center;gap:4px;padding:0 10px 0 2px;cursor:grab;touch-action:none;user-select:none;flex-shrink:0;height:40px;}
+.drag-handle span{display:block;width:18px;height:2px;background:var(--muted);border-radius:2px}
+.cli.dragging{opacity:.2}
+.prog-wrap{height:4px;background:var(--surf2);border-radius:2px;margin-bottom:14px;overflow:hidden}
+.prog-bar{height:100%;background:var(--ok);border-radius:2px;transition:width .3s}
+.prog-bar.facade{background:var(--facade)}
+.sh{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;padding:10px 0 7px;}
+.stabs{display:flex;background:var(--surf2);border-radius:9px;padding:3px;margin-bottom:14px;}
+.stab{flex:1;border:none;background:none;color:var(--muted);padding:7px 4px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit;}
+.stab.on{background:var(--surf);color:var(--text)}
+.stab.facade-tab.on{color:var(--facade)}
+.gcpc{background:var(--surf);border-radius:var(--r);padding:16px;margin-bottom:10px}
+.epsg{font-size:24px;font-weight:900;color:var(--accent);margin-bottom:3px;letter-spacing:-.5px}
+.sysname{font-size:14px;font-weight:700;margin-bottom:8px}
+.sysd{font-size:12px;color:var(--muted);line-height:1.7}
+.emlid-box{background:rgba(56,189,248,.07);border:1px solid rgba(56,189,248,.18);border-radius:8px;padding:10px 12px;margin-top:10px;font-size:13px;line-height:1.6;}
+.emlid-box strong{color:var(--accent)}
+.fbox{background:var(--surf);border-radius:var(--r);padding:14px;margin-bottom:10px;border-left:3px solid var(--facade);}
+.fbox-title{font-size:13px;font-weight:800;color:var(--facade);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em}
+.fbox-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.fbox-item{background:var(--surf2);border-radius:7px;padding:8px 10px}
+.fbox-key{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+.fbox-val{font-size:13px;font-weight:600}
+.fbox-val.ok{color:var(--ok)}
+.fbox-val.danger{color:var(--danger)}
+.pass-box{background:var(--surf2);border-radius:9px;padding:12px;margin-bottom:8px}
+.pass-row{display:flex;gap:6px;margin-bottom:5px;align-items:flex-start}
+.pass-dot{width:5px;height:5px;border-radius:50%;background:var(--facade);flex-shrink:0;margin-top:5px}
+.pass-text{font-size:12px;color:var(--muted);line-height:1.5}
+.pass-text b{color:var(--text)}
+.warn-box{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:12px;color:var(--danger);line-height:1.6;}
+.si{background:var(--surf2);border-radius:9px;padding:12px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;}
+.sdot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.sd-pending{background:var(--muted)}
+.sd-complete{background:var(--ok)}
+.sd-hold{background:var(--danger)}
+.sn{font-size:14px;font-weight:600}
+.sa{font-size:12px;color:var(--muted);margin-top:2px}
+.ssel{width:auto!important;padding:5px 8px!important;font-size:11px!important;flex-shrink:0}
+.reload-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.18);border-radius:9px;padding:14px;color:var(--accent);font-size:14px;font-weight:700;cursor:pointer;margin-bottom:12px;font-family:inherit;transition:opacity .15s;}
+.reload-btn:active{opacity:.7}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:flex-end;}
+.sh-panel{background:var(--surf);border-radius:20px 20px 0 0;padding:20px 16px;padding-bottom:max(24px,env(safe-area-inset-bottom));width:100%;max-height:88vh;overflow-y:auto;}
+.sh-handle{width:38px;height:4px;background:var(--surf3);border-radius:2px;margin:0 auto 16px;}
+.sh-title{font-size:18px;font-weight:800;margin-bottom:16px}
+.empty{text-align:center;padding:64px 20px;color:var(--muted)}
+.empty-i{font-size:52px;margin-bottom:12px}
+.empty-t{font-size:15px;line-height:1.6}
+.div{height:1px;background:rgba(255,255,255,0.05);margin:14px 0}
+.info-box{background:var(--surf2);border-radius:9px;padding:14px;font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:10px;}
+.info-box b{color:var(--text)}
+/* FLIGHT CALC */
+.fc-row{display:flex;align-items:center;gap:10px;margin-bottom:11px;}
+.fc-row label{font-size:13px;color:var(--muted);min-width:120px;flex-shrink:0;}
+.fc-row input[type=range]{flex:1;accent-color:var(--accent);}
+.fc-row .fc-val{font-size:13px;font-weight:700;min-width:62px;text-align:right;color:var(--text);}
+.fc-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.fc-card{background:var(--surf2);border-radius:9px;padding:10px 12px;}
+.fc-card-label{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;}
+.fc-card-val{font-size:20px;font-weight:700;color:var(--text);}
+.fc-card-unit{font-size:11px;color:var(--muted);}
+.fc-result{background:var(--surf);border-radius:var(--r);padding:14px 16px;margin-bottom:10px;border:1px solid rgba(56,189,248,.15);}
+.fc-time{font-size:38px;font-weight:800;color:var(--accent);letter-spacing:-.5px;line-height:1;}
+.fc-time-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;}
+.fc-meta{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.7;}
+.fc-meta b{color:var(--text);}
+.fc-warn{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:var(--warn);line-height:1.6;display:none;}
+.fc-ok{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:var(--ok);line-height:1.6;}
+.fc-section{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;padding:10px 0 7px;}
+.fc-note{font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:10px;}
+/* GSD card — full width, prominent */
+.gsd-card{background:var(--surf);border-radius:9px;padding:8px 12px;margin-bottom:10px;border:1px solid rgba(56,189,248,.15);display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.gsd-left{display:flex;align-items:baseline;gap:7px;}
+.gsd-label{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
+.gsd-value{font-size:22px;font-weight:900;color:var(--accent);letter-spacing:-.5px;line-height:1;}
+.gsd-unit{font-size:11px;color:var(--muted);}
+.gsd-toggle-wrap{display:flex;flex-direction:row;align-items:center;gap:6px;flex-shrink:0;}
+.gsd-toggle-label{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.04em;}
+</style>
 </head>
 <body>
+<div id="hdr">
+  <button id="back-btn" onclick="goBack()">‹</button>
+  <div id="hdr-title">Jobs</div>
+  <button id="add-btn" onclick="handleAdd()">+ New</button>
+</div>
+<div id="main"></div>
+<div id="nav">
+  <button class="nb on" id="nb-jobs" onclick="showTab('jobs')"><span class="nbi">📋</span>Jobs</button>
+  <button class="nb" id="nb-check" onclick="showTab('check')"><span class="nbi">✅</span>Checklist</button>
+  <button class="nb" id="nb-gcp" onclick="showTab('gcp')"><span class="nbi">📍</span>GCP</button>
+  <button class="nb" id="nb-calc" onclick="showTab('calc')"><span class="nbi">🛩️</span>Flight Calc</button>
+  <button class="nb" id="nb-settings" onclick="showTab('settings')"><span class="nbi">⚙️</span>Settings</button>
+</div>
+<script>
+const SK='fg_planner_v2';
+const DEF={
+  jobs:[],
+  cl:{
+    pre:['Charge phone fully','Charge all drone batteries','Charge backup batteries','Pack rod + legs (survey rod)','Download site files / KML','Check weather forecast','Check airspace / NOTAMs','Confirm Flyguys job details','Pack ground control targets'],
+    post:['All batteries accounted for','Drone secured in case','Survey rod + legs packed','Raw data backed up','Files uploaded per job req','Flight time logged','Report submitted in app'],
+    facade:['Confirm Building KML loaded in DJI Pilot 2','Verify RTK fix before takeoff','✅ CHECK: Dewarping ON (resets between flights!)','Set Image Ratio: 4:3','Set Image Format: JPG','Night Scene: OFF','Electronic Dehazing: OFF','White Balance: AUTO','Mechanical Shutter: ON','Focus: AFC','Complete Pass 1 — 0° gimbal, close/low','Re-verify Dewarping ON before Pass 2','Complete Pass 2 — −20° to −30° gimbal, 40ft further','Check coverage in QGIS before leaving site','Copy images to external hard drive (do not move)','Upload to FlyGuys portal within 12 hrs','Click "Complete Upload" in portal']
+  }
+};
+let D=load();
+let tab='jobs',view='list',jobId=null,clPhase='pre';
+let gsdInches=false; // GSD unit toggle
 
-  <div id="splash">
-    <div class="logo">
-      <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <!-- Simple drone icon -->
-        <path d="M24 20L8 12M24 20L40 12M24 20V32" stroke="#e94560" stroke-width="2.5" stroke-linecap="round"/>
-        <circle cx="8" cy="12" r="4" stroke="#e2e8f0" stroke-width="2" fill="none"/>
-        <circle cx="40" cy="12" r="4" stroke="#e2e8f0" stroke-width="2" fill="none"/>
-        <circle cx="24" cy="32" r="3" fill="#e94560"/>
-        <path d="M14 36L24 32L34 36" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-    </div>
-    <h1>FlyGuys Pilot</h1>
-    <p>Loading portal&hellip;</p>
-    <div class="spinner"></div>
+function load(){try{const s=JSON.parse(localStorage.getItem(SK));if(s){if(!s.cl.facade)s.cl.facade=JSON.parse(JSON.stringify(DEF.cl.facade));return s;}return JSON.parse(JSON.stringify(DEF));}catch{return JSON.parse(JSON.stringify(DEF));}}
+function save(){try{localStorage.setItem(SK,JSON.stringify(D));}catch(e){}}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function fmtDate(d){if(!d)return'';const[y,m,dy]=d.split('-');return new Date(y,m-1,dy).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+function isFacade(){const j=D.jobs.find(x=>x.id===jobId);return j?.facade||false;}
+
+function render(){
+  const m=document.getElementById('main');
+  if(view==='job'&&jobId){renderJob(m);return;}
+  if(tab==='jobs')renderJobs(m);
+  else if(tab==='check')renderCheck(m);
+  else if(tab==='gcp')renderGCP(m);
+  else if(tab==='calc')renderCalc(m);
+  else renderSettings(m);
+}
+
+function renderJobs(m){
+  hdr('Jobs',false,true);
+  if(!D.jobs.length){m.innerHTML=`<div class="empty"><div class="empty-i">🚁</div><div class="empty-t">No jobs yet.<br>Tap <b>+ New</b> to add your first job.</div></div>`;return;}
+  const sorted=[...D.jobs].sort((a,b)=>new Date(b.date||0)-new Date(a.date||0));
+  m.innerHTML=sorted.map(j=>{
+    const sc=j.sites?.length||0,done=j.sites?.filter(s=>s.status==='complete').length||0;
+    const pre=D.cl.pre.length,preDone=D.cl.pre.filter((_,i)=>j.checks?.pre?.[i]).length;
+    return`<div class="card" onclick="openJob('${j.id}')">
+      <div class="cr"><div class="ct">${esc(j.name)}${j.facade?' <span style="font-size:10px;background:rgba(167,139,250,.15);color:var(--facade);padding:2px 6px;border-radius:10px;font-weight:700">FACADE</span>':''}</div><span class="badge b-${j.status||'scheduled'}">${j.status||'scheduled'}</span></div>
+      <div class="cs">${j.date?fmtDate(j.date):'No date'}${j.jobId?' · '+esc(j.jobId):''}${sc?` · ${done}/${sc} sites`:''}${pre?` · pre ${preDone}/${pre}`:''}</div>
+    </div>`;
+  }).join('');
+}
+function openJob(id){jobId=id;view='job';if(clPhase==='facade'&&!isFacade())clPhase='pre';render();}
+
+function renderJob(m){
+  const j=D.jobs.find(x=>x.id===jobId);
+  if(!j){goBack();return;}
+  hdr(j.name,true,false);
+  const sites=j.sites||[],checks=j.checks||{pre:{},post:{},facade:{}};
+  const preT=D.cl.pre.length,preD=D.cl.pre.filter((_,i)=>checks.pre?.[i]).length;
+  const postT=D.cl.post.length,postD=D.cl.post.filter((_,i)=>checks.post?.[i]).length;
+  const facT=D.cl.facade.length,facD=D.cl.facade.filter((_,i)=>checks.facade?.[i]).length;
+  const showFac=j.facade||false;
+  if(clPhase==='facade'&&!showFac)clPhase='pre';
+  const facTabHTML=showFac?`<button class="stab facade-tab ${clPhase==='facade'?'on':''}" onclick="setCLP('facade')">Facade (${facD}/${facT})</button>`:'';
+  const progClass=clPhase==='facade'?'facade':'';
+  const progVal=clPhase==='pre'?(preT?Math.round(preD/preT*100):0):clPhase==='post'?(postT?Math.round(postD/postT*100):0):(facT?Math.round(facD/facT*100):0);
+  m.innerHTML=`
+  <div class="fg"><div class="fl">Job Name</div><input type="text" value="${esc(j.name)}" onchange="upJob('name',this.value)"></div>
+  <div class="fg"><div class="fl">Status</div>
+    <select onchange="upJob('status',this.value)">
+      <option value="scheduled" ${j.status==='scheduled'||!j.status?'selected':''}>Scheduled</option>
+      <option value="active" ${j.status==='active'?'selected':''}>Active / In Progress</option>
+      <option value="complete" ${j.status==='complete'?'selected':''}>Complete</option>
+      <option value="hold" ${j.status==='hold'?'selected':''}>On Hold</option>
+    </select></div>
+  <div style="display:flex;gap:10px">
+    <div class="fg" style="flex:1"><div class="fl">Date</div><input type="date" value="${j.date||''}" onchange="upJob('date',this.value)"></div>
+    <div class="fg" style="flex:1"><div class="fl">FG Job ID</div><input type="text" placeholder="FG-XXXXX" value="${esc(j.jobId||'')}" onchange="upJob('jobId',this.value)"></div>
   </div>
+  <div class="tog-row">
+    <div><div class="tog-label">🏢 Facade Capture Job</div><div class="tog-sub">Enables facade checklist + flight reference</div></div>
+    <button class="tog ${showFac?'on':''}" onclick="togFacade()"></button>
+  </div>
+  <div class="fg"><div class="fl">Notes</div><textarea placeholder="Weather holds, contacts, access codes, roof conditions..." onchange="upJob('notes',this.value)">${esc(j.notes||'')}</textarea></div>
+  <div class="div"></div>
+  <div class="sh">Flight Sites (${sites.length})</div>
+  ${sites.map((s,i)=>`
+    <div class="si">
+      <div class="sdot sd-${s.status||'pending'}"></div>
+      <div style="flex:1;min-width:0">
+        <div class="sn">${esc(s.name||'Site '+(i+1))}</div>
+        ${s.address?`<div class="sa">${esc(s.address)}</div>`:''}
+        ${s.notes?`<div class="sa" style="margin-top:3px">${esc(s.notes)}</div>`:''}
+      </div>
+      <select class="ssel" onchange="upSite(${i},'status',this.value)">
+        <option value="pending" ${(s.status||'pending')==='pending'?'selected':''}>⬜ Pending</option>
+        <option value="complete" ${s.status==='complete'?'selected':''}>✅ Done</option>
+        <option value="hold" ${s.status==='hold'?'selected':''}>🚫 Hold</option>
+      </select>
+      <button class="cld" onclick="delSite(${i})">×</button>
+    </div>`).join('')}
+  <button class="btn bg" style="width:100%;margin-bottom:4px" onclick="addSiteSheet()">+ Add Site</button>
+  <div class="div"></div>
+  <div class="sh">Checklists</div>
+  <div class="stabs">
+    <button class="stab ${clPhase==='pre'?'on':''}" onclick="setCLP('pre')">Pre (${preD}/${preT})</button>
+    <button class="stab ${clPhase==='post'?'on':''}" onclick="setCLP('post')">Post (${postD}/${postT})</button>
+    ${facTabHTML}
+  </div>
+  <div class="prog-wrap"><div class="prog-bar ${progClass}" id="prog" style="width:${progVal}%"></div></div>
+  <div id="cl-list">${clPhase==='facade'?renderFacadeContent():renderClItems()}</div>
+  <div class="div"></div>
+  <div class="br"><button class="btn bd" style="flex:1" onclick="delJob()">Delete Job</button></div>
+  <div style="height:24px"></div>`;
+}
 
-  <div id="offline-banner">You're offline — some features may be unavailable</div>
+function renderFacadeContent(){
+  const j=D.jobs.find(x=>x.id===jobId);if(!j)return'';
+  const checks=j.checks||{};checks.facade=checks.facade||{};
+  const items=D.cl.facade;
+  const pairs=items.map((item,i)=>({item,i,ck:!!(checks.facade[i])}));
+  pairs.sort((a,b)=>a.ck-b.ck);
+  const checkHTML=pairs.map(({item,i,ck})=>`
+    <div class="cli" style="${ck?'opacity:.5':''}">
+      <div class="clc ${ck?'ck-f':''}" onclick="togCl(${i})"></div>
+      <div class="clt ${ck?'done':''}">${esc(item)}</div>
+    </div>`).join('');
+  return`
+  ${checkHTML}
+  <div class="div"></div>
+  <div class="fbox">
+    <div class="fbox-title">📷 Camera Settings</div>
+    <div class="warn-box">⚠️ Dewarping resets when switching between manual and mapping modes — verify ON before every pass.</div>
+    <div class="fbox-grid">
+      <div class="fbox-item"><div class="fbox-key">Exposure</div><div class="fbox-val">Auto</div></div>
+      <div class="fbox-item"><div class="fbox-key">ISO</div><div class="fbox-val">Auto</div></div>
+      <div class="fbox-item"><div class="fbox-key">Shutter</div><div class="fbox-val">Auto</div></div>
+      <div class="fbox-item"><div class="fbox-key">EV</div><div class="fbox-val">Auto</div></div>
+      <div class="fbox-item"><div class="fbox-key">Focus</div><div class="fbox-val ok">AFC</div></div>
+      <div class="fbox-item"><div class="fbox-key">Image Ratio</div><div class="fbox-val ok">4:3</div></div>
+      <div class="fbox-item"><div class="fbox-key">Image Format</div><div class="fbox-val ok">JPG</div></div>
+      <div class="fbox-item"><div class="fbox-key">Mech. Shutter</div><div class="fbox-val ok">ON</div></div>
+      <div class="fbox-item"><div class="fbox-key">Dewarping</div><div class="fbox-val ok">ON ✅</div></div>
+      <div class="fbox-item"><div class="fbox-key">Night Scene</div><div class="fbox-val danger">OFF</div></div>
+      <div class="fbox-item"><div class="fbox-key">E. Dehazing</div><div class="fbox-val danger">OFF</div></div>
+      <div class="fbox-item"><div class="fbox-key">White Balance</div><div class="fbox-val">Auto</div></div>
+    </div>
+  </div>
+  <div class="fbox">
+    <div class="fbox-title">✈️ Pass 1 — Close / Low</div>
+    <div class="pass-box">
+      <div class="pass-row"><div class="pass-dot"></div><div class="pass-text"><b>Gimbal:</b> 0° (straight out, horizontal)</div></div>
+      <div class="pass-row"><div class="pass-dot"></div><div class="pass-text"><b>Framing:</b> ~80% building · ~15% horizon · ~5% ground</div></div>
+      <div class="pass-row"><div class="pass-dot"></div><div class="pass-text"><b>Flight:</b> Single continuous lap around full perimeter</div></div>
+      <div class="pass-row"><div class="pass-dot"></div><div class="pass-text"><b>Overlap:</b> Min 75% side lap between adjacent photos</div></div>
+      <div class="pass-row"><div class="pass-dot"></div><div class="pass-text"><b>Corners:</b> Round each corner — do not stop or skip</div></div>
+    </div>
+    <div class="fbox-title" style="margin-top:10px">✈️ Pass 2 — Further / Higher</div>
+    <div class="pass-box">
+      <div class="pass-row"><div class="pass-dot"></div><div class="pass-text"><b>Gimbal:</b> −20° to −30° pitch (slightly down)</div></div>
+      <div class="pass-row"><div class="pass-dot"></div><div class="pass-text"><b>Distance:</b> At least 40 ft further back than Pass 1</div></div>
+      <div class="pass-row"><div class="pass-dot"></div><div class="pass-text"><b>Framing:</b> ~⅓ building · ~⅓ roof/horizon · ~⅓ ground</div></div>
+      <div class="pass-row"><div class="pass-dot"></div><div class="pass-text"><b>Flight:</b> Single continuous lap around full perimeter</div></div>
+      <div class="pass-row"><div class="pass-dot"></div><div class="pass-text"><b>Overlap:</b> Min 75% side lap between adjacent photos</div></div>
+      <div class="pass-row"><div class="pass-dot"></div><div class="pass-text"><b>Corners:</b> Round each corner — do not stop or skip</div></div>
+    </div>
+  </div>
+  <div class="fbox">
+    <div class="fbox-title">🚫 Image Quality Failures (refly required)</div>
+    <div class="pass-box">
+      <div class="pass-row"><div class="pass-dot" style="background:var(--danger)"></div><div class="pass-text"><b>Excessively angled</b> — too steep, not enough wall detail</div></div>
+      <div class="pass-row"><div class="pass-dot" style="background:var(--danger)"></div><div class="pass-text"><b>Too far from structure</b> — insufficient wall detail</div></div>
+      <div class="pass-row"><div class="pass-dot" style="background:var(--danger)"></div><div class="pass-text"><b>Missing roof line</b> — roof edge must be visible</div></div>
+      <div class="pass-row"><div class="pass-dot" style="background:var(--danger)"></div><div class="pass-text"><b>Vignetted corners</b> — Dewarping was OFF during capture</div></div>
+    </div>
+  </div>`;
+}
 
-  <iframe id="app-frame" src="https://pilots.flyguys.com" allow="geolocation; camera; microphone; fullscreen"></iframe>
+function togFacade(){
+  const j=D.jobs.find(x=>x.id===jobId);if(!j)return;
+  j.facade=!j.facade;
+  if(!j.checks)j.checks={pre:{},post:{},facade:{}};
+  if(!j.checks.facade)j.checks.facade={};
+  if(!j.facade&&clPhase==='facade')clPhase='pre';
+  save();render();
+}
 
-  <script>
-    const splash = document.getElementById('splash');
-    const frame = document.getElementById('app-frame');
-    const offlineBanner = document.getElementById('offline-banner');
+function renderClItems(){
+  const j=D.jobs.find(x=>x.id===jobId);if(!j)return'';
+  const items=D.cl[clPhase],checks=j.checks||{pre:{},post:{}};
+  const pairs=items.map((item,i)=>({item,i,ck:!!(checks[clPhase]?.[i])}));
+  pairs.sort((a,b)=>a.ck-b.ck);
+  return pairs.map(({item,i,ck})=>`
+    <div class="cli" style="${ck?'opacity:.5':''}">
+      <div class="clc ${ck?'ck':''}" onclick="togCl(${i})"></div>
+      <div class="clt ${ck?'done':''}">${esc(item)}</div>
+    </div>`).join('');
+}
 
-    // Hide splash when iframe loads
-    frame.addEventListener('load', () => {
-      setTimeout(() => splash.classList.add('hidden'), 600);
-    });
+function togCl(i){
+  const j=D.jobs.find(x=>x.id===jobId);if(!j)return;
+  j.checks=j.checks||{pre:{},post:{},facade:{}};
+  j.checks[clPhase]=j.checks[clPhase]||{};
+  j.checks[clPhase][i]=!j.checks[clPhase][i];
+  save();
+  document.getElementById('cl-list').innerHTML=clPhase==='facade'?renderFacadeContent():renderClItems();
+  const items=D.cl[clPhase],checks=j.checks;
+  const tot=items.length,done=items.filter((_,k)=>checks[clPhase]?.[k]).length;
+  const prog=document.getElementById('prog');
+  if(prog)prog.style.width=(tot?Math.round(done/tot*100):0)+'%';
+  document.querySelectorAll('.stab').forEach(t=>{
+    if(clPhase==='pre'&&t.textContent.startsWith('Pre'))t.textContent=`Pre (${done}/${tot})`;
+    if(clPhase==='post'&&t.textContent.startsWith('Post'))t.textContent=`Post (${done}/${tot})`;
+    if(clPhase==='facade'&&t.classList.contains('facade-tab'))t.textContent=`Facade (${done}/${tot})`;
+  });
+}
 
-    // Fallback: hide splash after 8s even if load event doesn't fire
-    setTimeout(() => splash.classList.add('hidden'), 8000);
-
-    // Offline detection
-    function updateOnlineStatus() {
-      if (!navigator.onLine) {
-        offlineBanner.classList.add('show');
-      } else {
-        offlineBanner.classList.remove('show');
-      }
+function setCLP(p){
+  clPhase=p;
+  const cl=document.getElementById('cl-list');
+  if(cl){
+    cl.innerHTML=p==='facade'?renderFacadeContent():renderClItems();
+    document.querySelectorAll('.stab').forEach(t=>t.classList.remove('on'));
+    if(p==='pre')document.querySelectorAll('.stab')[0]?.classList.add('on');
+    if(p==='post')document.querySelectorAll('.stab')[1]?.classList.add('on');
+    if(p==='facade')document.querySelector('.facade-tab')?.classList.add('on');
+    const j=D.jobs.find(x=>x.id===jobId);
+    if(j){
+      const items=D.cl[p],checks=j.checks||{};
+      const tot=items.length,done=items.filter((_,k)=>checks[p]?.[k]).length;
+      const prog=document.getElementById('prog');
+      if(prog){prog.style.width=(tot?Math.round(done/tot*100):0)+'%';prog.classList.toggle('facade',p==='facade');}
     }
-    window.addEventListener('online', updateOnlineStatus);
-    window.addEventListener('offline', updateOnlineStatus);
-    updateOnlineStatus();
+  }
+}
 
-    // Register service worker for PWA installability
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
-        .then((reg) => console.log('SW registered:', reg.scope))
-        .catch((err) => console.warn('SW registration failed:', err));
-    }
-  </script>
+function upJob(field,val){const j=D.jobs.find(x=>x.id===jobId);if(j){j[field]=val;save();}}
+function upSite(i,field,val){const j=D.jobs.find(x=>x.id===jobId);if(j?.sites?.[i]){j.sites[i][field]=val;save();}}
+function delSite(i){confirm2('Remove this site?',()=>{const j=D.jobs.find(x=>x.id===jobId);if(j){j.sites.splice(i,1);save();render();}});}
+function delJob(){confirm2('Delete this job? Cannot be undone.',()=>{D.jobs=D.jobs.filter(j=>j.id!==jobId);save();goBack();});}
+
+// ── CHECKLIST TEMPLATE TAB ────────────────────────────
+function renderCheck(m){
+  hdr('Checklists',false,false);
+  m.innerHTML=`
+  <div class="stabs">
+    <button class="stab ${clPhase==='pre'?'on':''}" onclick="setClTab('pre')">Pre-Flight</button>
+    <button class="stab ${clPhase==='post'?'on':''}" onclick="setClTab('post')">Post-Flight</button>
+    <button class="stab facade-tab ${clPhase==='facade'?'on':''}" onclick="setClTab('facade')">Facade</button>
+  </div>
+  <div class="info-box">Edit templates here. Drag ≡ to reorder. Changes apply to all jobs.</div>
+  <div id="tmpl-list">${renderTemplate()}</div>
+  <button class="btn bg" style="width:100%;margin-top:4px" onclick="addTmplItem()">+ Add Item</button>
+  <div style="height:20px"></div>`;
+}
+function renderTemplate(){
+  return D.cl[clPhase].map((item,i)=>`
+  <div class="cli" id="tpl-${i}">
+    <div class="drag-handle" onpointerdown="startDrag(event,${i})"><span></span><span></span><span></span></div>
+    <div class="clt">${esc(item)}</div>
+    <button class="cld" onclick="delTmpl(${i})">×</button>
+  </div>`).join('');
+}
+function setClTab(p){clPhase=p;render();}
+function addTmplItem(){
+  const label=clPhase==='pre'?'pre-flight':clPhase==='post'?'post-flight':'facade';
+  prompt2(`New ${label} item:`,'e.g. Check props for damage',v=>{if(!v?.trim())return;D.cl[clPhase].push(v.trim());save();render();});
+}
+function delTmpl(i){confirm2(`Remove "${D.cl[clPhase][i]}"?`,()=>{D.cl[clPhase].splice(i,1);save();render();});}
+
+// ── DRAG TO REORDER ───────────────────────────────────
+let _drag=null;
+function startDrag(e,idx){
+  e.preventDefault();
+  const handle=e.currentTarget,el=handle.closest('.cli'),rect=el.getBoundingClientRect();
+  const clone=el.cloneNode(true);
+  clone.style.cssText=`position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;z-index:999;pointer-events:none;background:var(--surf3);border-radius:9px;box-shadow:0 8px 32px rgba(0,0,0,.6);`;
+  document.body.appendChild(clone);
+  el.classList.add('dragging');
+  _drag={idx,el,clone,offsetY:e.clientY-rect.top,insertAt:idx};
+  handle.setPointerCapture(e.pointerId);
+  handle.addEventListener('pointermove',onDragMove);
+  handle.addEventListener('pointerup',onDragEnd,{once:true});
+  handle.addEventListener('pointercancel',onDragEnd,{once:true});
+}
+function onDragMove(e){
+  if(!_drag)return;
+  _drag.clone.style.top=(e.clientY-_drag.offsetY)+'px';
+  const items=[...document.querySelectorAll('#tmpl-list .cli')];
+  let ins=0;
+  items.forEach((el,i)=>{if(el===_drag.el)return;const r=el.getBoundingClientRect();if(e.clientY>r.top+r.height/2)ins=i+1;});
+  _drag.insertAt=ins;
+  items.forEach((el,i)=>{el.style.borderTop=(i===ins&&el!==_drag.el)?'2px solid var(--accent)':'';});
+}
+function onDragEnd(e){
+  if(!_drag)return;
+  const{idx,el,clone,insertAt}=_drag;
+  clone.remove();el.classList.remove('dragging');
+  document.querySelectorAll('#tmpl-list .cli').forEach(el=>el.style.borderTop='');
+  e.currentTarget.removeEventListener('pointermove',onDragMove);
+  const wi=idx,wIns=insertAt;_drag=null;
+  if(wIns!==wi){
+    const arr=[...D.cl[clPhase]];
+    const[item]=arr.splice(wi,1);
+    arr.splice(wIns>wi?wIns-1:wIns,0,item);
+    D.cl[clPhase]=arr;save();render();
+  }
+}
+
+// ── GCP TAB ───────────────────────────────────────────
+const GCP={
+  NH:{label:'New Hampshire',sys:[{epsg:'EPSG:32110',name:'NAD83 / New Hampshire',units:'US Survey Feet (ftUS)',emlid:'In Emlid Flow → Settings → Coordinate System → search "New Hampshire" → select NAD83 / New Hampshire (ftUS)',note:'Covers all of NH. Most survey work here uses feet — confirm with client if meters needed.'}]},
+  MA:{label:'Massachusetts',sys:[
+    {epsg:'EPSG:26986',name:'NAD83 / Massachusetts Mainland',units:'Meters',emlid:'Search "Massachusetts Mainland" → select NAD83 / Massachusetts Mainland (m)',note:'Mainland MA sites — Springfield, Longmeadow, Boston, Worcester.'},
+    {epsg:'EPSG:26987',name:'NAD83 / Massachusetts Island',units:'Meters',emlid:'Search "Massachusetts Island" in Emlid Flow',note:'Cape Cod, Nantucket, Martha\'s Vineyard only.'}
+  ]},
+  CT:{label:'Connecticut',sys:[{epsg:'EPSG:32118',name:'NAD83 / Connecticut',units:'US Survey Feet (ftUS)',emlid:'Search "Connecticut" → select NAD83 / Connecticut (ftUS)',note:'Statewide — Enfield, Willimantic, Hartford.'}]},
+  RI:{label:'Rhode Island',sys:[{epsg:'EPSG:32130',name:'NAD83 / Rhode Island',units:'US Survey Feet (ftUS)',emlid:'Search "Rhode Island" → select NAD83 / Rhode Island (ftUS)',note:'Single zone statewide.'}]},
+  VT:{label:'Vermont',sys:[{epsg:'EPSG:32145',name:'NAD83 / Vermont',units:'US Survey Feet (ftUS)',emlid:'Search "Vermont" → select NAD83 / Vermont (ftUS)',note:'Single zone statewide.'}]},
+  ME:{label:'Maine',sys:[
+    {epsg:'EPSG:32120',name:'NAD83 / Maine East',units:'Meters',emlid:'Search "Maine East" → select NAD83 / Maine East (m)',note:'Eastern ME: Portland, Bangor, coastal areas.'},
+    {epsg:'EPSG:32121',name:'NAD83 / Maine West',units:'Meters',emlid:'Search "Maine West" → select NAD83 / Maine West (m)',note:'Western ME: Lewiston, Auburn, Farmington.'}
+  ]},
+  UTM:{label:'UTM Zone 19N (Universal)',sys:[{epsg:'EPSG:32619',name:'WGS84 / UTM Zone 19N',units:'Meters',emlid:'Search "UTM 19N" or type "32619" in Emlid Flow',note:'Covers all of New England. Best cross-state fallback.'}]}
+};
+let gcpState=localStorage.getItem('fg_gcp')||'NH';
+function renderGCP(m){
+  hdr('GCP Coords',false,false);
+  const sd=GCP[gcpState];
+  m.innerHTML=`
+  <div class="fg"><div class="fl">State / Region</div>
+    <select onchange="setGCP(this.value)">${Object.entries(GCP).map(([k,v])=>`<option value="${k}" ${k===gcpState?'selected':''}>${v.label}</option>`).join('')}</select>
+  </div>
+  ${sd.sys.map(s=>`<div class="gcpc">
+    <div class="epsg">${s.epsg}</div><div class="sysname">${s.name}</div>
+    <div class="sysd">Units: <b style="color:var(--text)">${s.units}</b><br>${s.note}</div>
+    <div class="emlid-box"><strong>Emlid Flow:</strong><br>${esc(s.emlid)}</div>
+  </div>`).join('')}
+  <div class="div"></div>
+  <div class="gcpc">
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px">📐 Vertical / Ellipsoidal Height</div>
+    <div class="sysd">Flyguys uses <b style="color:var(--text)">GEOID12B</b> (<code style="font-size:11px;color:var(--accent)">us_noaa_g2012bu0.tif</code>) to convert GPS ellipsoidal height to NAVD88.<br><br><b style="color:var(--text)">In Emlid Flow:</b></div>
+    <div class="emlid-box" style="margin-top:8px"><strong>Vertical datum:</strong> NAVD88<br><strong>Geoid model:</strong> GEOID12B<br><strong>Height output:</strong> Orthometric (match horizontal units)<br><br><strong>⚠️ Do not export ellipsoidal height</strong> — use NAVD88 unless job calls for HAE.</div>
+  </div>
+  <div class="div"></div>
+  <div class="gcpc">
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px">📋 GCP Workflow</div>
+    <div class="sysd">1. Set coordinate system in Emlid Flow before collecting<br>2. Stake / lay flat targets before flight<br>3. Collect each GCP — average 3–5 min per point<br>4. Export CSV from Emlid → import to photogrammetry software<br>5. Match point IDs to visible targets in imagery</div>
+  </div>
+  <div style="height:20px"></div>`;
+}
+function setGCP(s){gcpState=s;localStorage.setItem('fg_gcp',s);renderGCP(document.getElementById('main'));}
+
+// ── FLIGHT CALC TAB ───────────────────────────────────
+// M4E specs: 48MP wide camera, 8064×6048px, sensor 17.3×13mm, focal 12.29mm
+const M4E={sensorW_mm:17.3,sensorH_mm:13.0,focalLen_mm:12.29,imgW_px:5472,imgH_px:3648,battMin:38,shutterIntervalS:3.0};
+let FC={acres:6.23,altFt:200,frontOv:75,sideOv:65,speedMph:18};
+
+function renderCalc(m){
+  hdr('Flight Calc',false,false);
+  m.innerHTML=`
+  <div class="fc-section">M4E Mission Parameters</div>
+  <div class="fc-row"><label>Area (acres)</label><input type="range" min="1" max="50" step="0.5" value="${FC.acres}" oninput="fcUp('acres',+this.value)"><span class="fc-val" id="fc-acres">${FC.acres}</span></div>
+  <div class="fc-row"><label>Altitude AGL</label><input type="range" min="50" max="400" step="5" value="${FC.altFt}" oninput="fcUp('altFt',+this.value)"><span class="fc-val" id="fc-alt">${FC.altFt} ft</span></div>
+  <div class="fc-row"><label>Front overlap</label><input type="range" min="50" max="95" step="5" value="${FC.frontOv}" oninput="fcUp('frontOv',+this.value)"><span class="fc-val" id="fc-front">${FC.frontOv}%</span></div>
+  <div class="fc-row"><label>Side overlap</label><input type="range" min="50" max="95" step="5" value="${FC.sideOv}" oninput="fcUp('sideOv',+this.value)"><span class="fc-val" id="fc-side">${FC.sideOv}%</span></div>
+  <div class="fc-row"><label>Speed</label><input type="range" min="4" max="33" step="1" value="${FC.speedMph}" oninput="fcUp('speedMph',+this.value)"><span class="fc-val" id="fc-speed">${FC.speedMph} mph</span></div>
+  <div id="fc-shutter-status"></div>
+  <div class="gsd-card" style="margin-top:2px">
+    <div class="gsd-left">
+      <div class="gsd-label">GSD</div>
+      <div class="gsd-value" id="gsd-value">—</div>
+      <div class="gsd-unit" id="gsd-unit">cm/px</div>
+    </div>
+    <div class="gsd-toggle-wrap">
+      <div class="gsd-toggle-label" id="gsd-tog-label">cm</div>
+      <button class="tog acc ${gsdInches?'on':''}" onclick="togGSD()" title="Toggle in/px"></button>
+      <div class="gsd-toggle-label" style="color:${gsdInches?'var(--accent)':'var(--muted)'}">in</div>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div class="fc-section">Results</div>
+  <div class="fc-result">
+    <div class="fc-time-label">Estimated Flight Time</div>
+    <div class="fc-time" id="fc-time">—</div>
+    <div class="fc-meta" id="fc-meta"></div>
+  </div>
+  <div class="fc-cards" id="fc-cards"></div>
+  <div class="fc-note">Assumes calm wind · no obstacles · standard transit/turnaround<br>M4E battery = ~38 min max · add 15–20% buffer for wind/RTH reserve<br>GSD based on M4E wide camera (20MP · 12.29mm · 17.3mm sensor)</div>
+  <div style="height:20px"></div>`;
+  fcCalc();
+}
+
+function togGSD(){
+  gsdInches=!gsdInches;
+  const btn=document.querySelector('.tog.acc');
+  if(btn)btn.classList.toggle('on',gsdInches);
+  const lbl=document.getElementById('gsd-tog-label');
+  if(lbl){lbl.style.color=gsdInches?'var(--muted)':'var(--accent)';}
+  const nxt=document.querySelector('.gsd-toggle-wrap .gsd-toggle-label:last-child');
+  if(nxt)nxt.style.color=gsdInches?'var(--accent)':'var(--muted)';
+  fcCalc();
+}
+
+function fcUp(key,val){
+  FC[key]=val;
+  document.getElementById('fc-acres').textContent=FC.acres;
+  document.getElementById('fc-alt').textContent=FC.altFt+' ft';
+  document.getElementById('fc-front').textContent=FC.frontOv+'%';
+  document.getElementById('fc-side').textContent=FC.sideOv+'%';
+  document.getElementById('fc-speed').textContent=FC.speedMph+' mph';
+  fcCalc();
+}
+
+function fcCalc(){
+  const altM=FC.altFt*0.3048;
+  const areaM2=FC.acres*4046.86;
+  const speedMs=FC.speedMph*0.44704;
+  const fwM=(M4E.sensorW_mm/M4E.focalLen_mm)*altM;
+  const fhM=(M4E.sensorH_mm/M4E.focalLen_mm)*altM;
+
+  // GSD: cm/pixel along the width axis
+  const gsdCm=(M4E.sensorW_mm/M4E.focalLen_mm)*(altM/M4E.imgW_px)*100;
+  const gsdIn=gsdCm*0.393701;
+  const gsdDisplay=gsdInches?gsdIn.toFixed(3):gsdCm.toFixed(2);
+  const gsdUnitStr=gsdInches?'in / px':'cm / px';
+  const gv=document.getElementById('gsd-value');
+  const gu=document.getElementById('gsd-unit');
+  if(gv)gv.textContent=gsdDisplay;
+  if(gu)gu.textContent=gsdUnitStr;
+
+  const targetTrigM=fhM*(1-FC.frontOv/100);
+  const lineSpacingM=fwM*(1-FC.sideOv/100);
+  const shutterTrigM=speedMs*M4E.shutterIntervalS;
+  const actualTrigM=Math.max(targetTrigM,shutterTrigM);
+  const actualFrontOv=Math.round((1-(actualTrigM/fhM))*100);
+  const isLimited=shutterTrigM>targetTrigM;
+  const maxSpeedMph=(targetTrigM/M4E.shutterIntervalS/0.44704).toFixed(1);
+  const areaSqrt=Math.sqrt(areaM2);
+  const numLines=Math.ceil(areaSqrt/lineSpacingM)+1;
+  const totalLineM=numLines*areaSqrt;
+  const totalS=(totalLineM/speedMs)+(numLines*3);
+  const totalMin=totalS/60;
+  const imagesPerLine=Math.ceil(areaSqrt/actualTrigM)+1;
+  const totalImages=numLines*imagesPerLine;
+  const batts=Math.ceil(totalMin/(M4E.battMin*0.85));
+  const mins=Math.floor(totalMin);
+  const secs=Math.round((totalMin-mins)*60);
+
+  const ss=document.getElementById('fc-shutter-status');
+  if(ss){ss.innerHTML=isLimited
+    ?`<div class="fc-warn" style="display:block">⚠️ Shutter-limited at ${FC.speedMph} mph — actual front overlap ~${actualFrontOv}%, not ${FC.frontOv}%. Max speed for ${FC.frontOv}% front overlap: ${maxSpeedMph} mph.</div>`
+    :`<div class="fc-ok">✓ Speed OK — shutter keeps up at ${FC.speedMph} mph. Max for ${FC.frontOv}% front overlap: ${maxSpeedMph} mph.</div>`;}
+
+  const ft=document.getElementById('fc-time');
+  if(ft)ft.textContent=mins+'m '+secs+'s';
+  const meta=document.getElementById('fc-meta');
+  if(meta)meta.innerHTML=`<b>${batts}</b> ${batts===1?'battery':'batteries'} · <b>${totalImages.toLocaleString()}</b> images · footprint ${fwM.toFixed(0)}m × ${fhM.toFixed(0)}m${isLimited?' · <span style="color:var(--warn)">actual overlap '+actualFrontOv+'%</span>':''}`;
+  const cards=document.getElementById('fc-cards');
+  if(cards){
+    const data=[
+      {label:'Flight Lines',val:numLines,unit:'lines'},
+      {label:'Total Distance',val:(totalLineM/1000).toFixed(2),unit:'km'},
+      {label:'Line Spacing',val:lineSpacingM.toFixed(1),unit:'m'},
+      {label:'Trigger Interval',val:actualTrigM.toFixed(1),unit:'m actual'},
+    ];
+    cards.innerHTML=data.map(c=>`<div class="fc-card"><div class="fc-card-label">${c.label}</div><div class="fc-card-val">${c.val}</div><div class="fc-card-unit">${c.unit}</div></div>`).join('');
+  }
+}
+
+// ── SETTINGS TAB ──────────────────────────────────────
+function renderSettings(m){
+  hdr('Settings',false,false);
+  m.innerHTML=`
+  <div class="info-box" style="margin-bottom:14px"><b>Flyguys Field Planner v1.2</b><br><span style="font-size:12px">Host on GitHub Pages, Netlify, or Cloudflare Pages.</span></div>
+  <button class="reload-btn" onclick="forceReload()">🔄 Reload from Web</button>
+  <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:16px">Clears service worker cache and force-reloads. Use after pushing updates to your repo.</div>
+  <div class="div"></div>
+  <div class="fg"><div class="fl">Backup</div><button class="btn bg" style="width:100%" onclick="exportData()">📤 Export JSON Backup</button></div>
+  <div class="fg"><div class="fl">Danger Zone</div><button class="btn bd" style="width:100%" onclick="clearAll()">🗑 Clear All Data</button></div>
+  <div class="div"></div>
+  <div class="gcpc">
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px">📱 Install as App</div>
+    <div class="sysd"><b style="color:var(--text)">Android (Chrome):</b><br>Tap ⋮ → Add to Home Screen<br><br><b style="color:var(--text)">iPhone (Safari):</b><br>Tap Share → Add to Home Screen</div>
+  </div>
+  <div style="height:20px"></div>`;
+}
+
+// ── ACTIONS ───────────────────────────────────────────
+function handleAdd(){
+  if(view==='job'){addSiteSheet();return;}
+  if(tab==='jobs')addJobSheet();
+  else if(tab==='check')addTmplItem();
+}
+function addJobSheet(){
+  const today=new Date().toISOString().split('T')[0];
+  sheet(`<div class="sh-handle"></div>
+  <div class="sh-title">New Job</div>
+  <div class="fg"><div class="fl">Job Name</div><input type="text" id="nj-name" placeholder="e.g. Flyguys – Springfield MA"></div>
+  <div style="display:flex;gap:10px">
+    <div class="fg" style="flex:1"><div class="fl">Date</div><input type="date" id="nj-date" value="${today}"></div>
+    <div class="fg" style="flex:1"><div class="fl">FG Job ID</div><input type="text" id="nj-jid" placeholder="FG-XXXXX"></div>
+  </div>
+  <div class="br">
+    <button class="btn bg" style="flex:1" onclick="closeSheet()">Cancel</button>
+    <button class="btn bp" style="flex:1" onclick="createJob()">Create</button>
+  </div>`);
+  setTimeout(()=>document.getElementById('nj-name')?.focus(),120);
+}
+function createJob(){
+  const n=document.getElementById('nj-name').value.trim();if(!n)return;
+  const j={id:uid(),name:n,date:document.getElementById('nj-date').value,jobId:document.getElementById('nj-jid').value.trim(),status:'scheduled',notes:'',facade:false,sites:[],checks:{pre:{},post:{},facade:{}}};
+  D.jobs.push(j);save();closeSheet();openJob(j.id);
+}
+function addSiteSheet(){
+  sheet(`<div class="sh-handle"></div>
+  <div class="sh-title">Add Flight Site</div>
+  <div class="fg"><div class="fl">Site Name</div><input type="text" id="ns-name" placeholder="e.g. 123 Main St – Rooftop"></div>
+  <div class="fg"><div class="fl">Address</div><input type="text" id="ns-addr" placeholder="Street address or description"></div>
+  <div class="fg"><div class="fl">Notes</div><textarea id="ns-notes" placeholder="Snow on roof, access code, restricted airspace, tree line..."></textarea></div>
+  <div class="br">
+    <button class="btn bg" style="flex:1" onclick="closeSheet()">Cancel</button>
+    <button class="btn bp" style="flex:1" onclick="createSite()">Add Site</button>
+  </div>`);
+  setTimeout(()=>document.getElementById('ns-name')?.focus(),120);
+}
+function createSite(){
+  const n=document.getElementById('ns-name').value.trim();if(!n)return;
+  const j=D.jobs.find(x=>x.id===jobId);if(!j)return;
+  j.sites=j.sites||[];
+  j.sites.push({name:n,address:document.getElementById('ns-addr').value.trim(),notes:document.getElementById('ns-notes').value.trim(),status:'pending'});
+  save();closeSheet();render();
+}
+
+// ── NAV ───────────────────────────────────────────────
+function showTab(t){
+  tab=t;view='list';jobId=null;
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
+  document.getElementById('nb-'+t)?.classList.add('on');
+  render();
+}
+function goBack(){view='list';jobId=null;render();}
+function hdr(title,showBack,showAdd){
+  document.getElementById('hdr-title').textContent=title;
+  document.getElementById('back-btn').style.display=showBack?'':'none';
+  document.getElementById('add-btn').style.display=showAdd?'':'none';
+}
+
+// ── SHEET / MODALS ────────────────────────────────────
+function sheet(html){
+  const ov=document.createElement('div');ov.className='ov';ov.id='ov';
+  ov.innerHTML=`<div class="sh-panel">${html}</div>`;
+  ov.addEventListener('click',e=>{if(e.target===ov)closeSheet();});
+  document.body.appendChild(ov);
+}
+function closeSheet(){document.getElementById('ov')?.remove();}
+let _cb=null;
+function confirm2(msg,onYes){
+  _cb=onYes;
+  sheet(`<div class="sh-handle"></div>
+  <div class="sh-title" style="font-size:16px">${esc(msg)}</div>
+  <div class="br" style="margin-top:8px">
+    <button class="btn bg" style="flex:1" onclick="closeSheet()">Cancel</button>
+    <button class="btn bd" style="flex:1" onclick="closeSheet();_cb&&_cb()">Delete</button>
+  </div>`);
+}
+function prompt2(msg,placeholder,onOk){
+  _cb=onOk;
+  sheet(`<div class="sh-handle"></div>
+  <div class="sh-title" style="font-size:16px">${esc(msg)}</div>
+  <div class="fg"><input type="text" id="p2-val" placeholder="${esc(placeholder)}"></div>
+  <div class="br">
+    <button class="btn bg" style="flex:1" onclick="closeSheet()">Cancel</button>
+    <button class="btn bp" style="flex:1" onclick="_cb&&_cb(document.getElementById('p2-val').value);closeSheet()">Add</button>
+  </div>`);
+  setTimeout(()=>document.getElementById('p2-val')?.focus(),120);
+}
+
+// ── UTILS ─────────────────────────────────────────────
+function forceReload(){
+  if('serviceWorker'in navigator)navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister()));
+  if('caches'in window)caches.keys().then(ks=>ks.forEach(k=>caches.delete(k)));
+  setTimeout(()=>location.reload(true),350);
+}
+function exportData(){
+  const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});
+  const u=URL.createObjectURL(b);
+  const a=document.createElement('a');a.href=u;a.download='fg-planner-backup.json';a.click();
+  URL.revokeObjectURL(u);
+}
+function clearAll(){
+  confirm2('Clear ALL jobs and data? Cannot be undone.',()=>{D=JSON.parse(JSON.stringify(DEF));save();view='list';jobId=null;render();});
+}
+if('serviceWorker'in navigator){navigator.serviceWorker.register('/Drone-Job-checklist/sw.js').catch(()=>{});}
+render();
+</script>
 </body>
 </html>
